@@ -29,7 +29,86 @@
  * bool Matrix::operator==(const Matrix& other)                     10 points
  */
 
-#include "matrix.h"
+#include<iostream>
+class Matrix{
+public:
+    Matrix(int row,int col);
+    int GetRow()const;
+    int GetCol()const;
+    int * operator[](int row);
+    friend std::istream &operator >>(std::istream & in,Matrix & r);
+    friend std::ostream &operator <<(std::ostream & out,Matrix & r);
+    ~Matrix();
+private:
+    int rows;
+    int cols;
+    int **matrix;
+};
+Matrix::Matrix(int row,int col){
+    matrix=new int*[row];
+    for(int i=0;i<row;i++){
+            matrix[i] = new int[col];
+        for(int j=0;j<col;j++){
+            matrix[i][j] = 0;
+        }
+    }
+}
+Matrix operator *(const Matrix &a,const Matrix &b){
+    Matrix c(a.GetRow(),b.GetCol());
+    for (int i = 0; i < a.GetRow(); i++){
+		for(int j=0;j<b.GetCol(); j++){
+            double s = 0;
+			for (int k = 0; k < a.GetCol(); k++)
+			{
+				s += a[i][k] * b[k][j];
+			}
+            c[i][j]=s;
+        }
+	}
+	return c;
+}
+int * Matrix::operator[](int row){
+    return matrix[row];
+}
+std::istream &operator >>(std::istream &in,Matrix &r){
+    for(int i=0;i<r.rows;i++){
+        for(int j=0;j<r.cols;j++){
+            in >> r[i][j];
+        }
+    }
+    return in;
+}
+std::ostream &operator <<(std::ostream &out,Matrix &r){
+    for(int i=0;i<r.rows;i++){
+        for(int j=0;j<r.cols;j++){
+            out << r[i][j];
+        }
+    }
+    return out;
+}
+int Matrix::GetRow() const{ return rows; }
+int Matrix:: GetCol() const{ return cols; }
+Matrix::~Matrix(){
+    for(int i=0;i<rows;i++){
+        delete[] matrix[i];
+    }
+    delete[] matrix;
+}
+int main() {
+    int rows, cols;
+
+    std::cin >> rows >> cols;
+    Matrix A(rows, cols);
+    std::cin >> A;
+
+    std::cin >> rows >> cols;
+    Matrix B(rows, cols);
+    std::cin >> B;
+
+    std::cout << A * B;
+
+    return 0;
+}
 
 int main() {
     int rows, cols;
