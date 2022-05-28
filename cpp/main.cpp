@@ -33,18 +33,29 @@
 class Matrix{
 public:
     Matrix(int row,int col);
+    Matrix(int row, int col, int** matrix) ;
+    Matrix(const Matrix& m);
+    Matrix(Matrix&& m);
     int GetRow()const;
     int GetCol()const;
     int * operator[](int row);
+    Matrix& operator=(const Matrix& other);
+    Matrix operator*(const Matrix& b)const;
+    Matrix operator+(const Matrix& b)const;
+    bool operator==(const Matrix& b)const;
     friend std::istream &operator >>(std::istream & in,Matrix & r);
-    friend std::ostream &operator <<(std::ostream & out,Matrix & r);
+    friend std::ostream &operator <<(std::ostream & out,const Matrix & r);
     ~Matrix();
 private:
     int rows;
     int cols;
     int **matrix;
 };
+#include<iostream>
+#include"matrix.h"
 Matrix::Matrix(int row,int col){
+    rows=row;
+    cols=col;
     matrix=new int*[row];
     for(int i=0;i<row;i++){
             matrix[i] = new int[col];
@@ -53,36 +64,123 @@ Matrix::Matrix(int row,int col){
         }
     }
 }
-Matrix operator *(const Matrix &a,const Matrix &b){
-    Matrix c(a.GetRow(),b.GetCol());
-    for (int i = 0; i < a.GetRow(); i++){
-		for(int j=0;j<b.GetCol(); j++){
-            double s = 0;
-			for (int k = 0; k < a.GetCol(); k++)
-			{
-				s += a[i][k] * b[k][j];
+Matrix::Matrix(int row, int col, int** p) {
+    rows=row;
+    cols=col;
+    matrix = new int*[row];
+    for(int i=0;i<rows;i++){
+        matrix[i] = new int[cols];
+        for(int j=0;j<cols;j++){
+            matrix[i][j]=*((*p+i)+j);
+        }
+    }
+}
+Matrix::Matrix(const Matrix& m) {
+	rows = m.GetRow();
+	cols= m.GetCol();
+	matrix = new int*[rows];
+	for (int i = 0; i < rows; i++){
+		matrix[i] = new int[cols];
+	    for (int j = 0; j <  cols; j++){
+		    matrix[i][j] = m.matrix[i][j];
+	    }
+    }
+}
+Matrix::Matrix(Matrix&& m){
+    rows = m.GetRow();
+	cols= m.GetCol();
+	matrix = new int*[rows];
+	for (int i = 0; i < rows; i++){
+		matrix[i] = new int[cols];
+	    for (int j = 0; j <  cols; j++){
+		    matrix[i][j] = m.matrix[i][j];
+	    }
+    }
+    m.~Matrix();
+}
+Matrix& Matrix::operator=(const Matrix& other){
+    if (!(rows == other.rows&&cols == other.cols)) {	//尺寸不同重新构造
+		this->~Matrix();								//释放掉先前的矩阵
+		rows = other.rows;
+		cols = other.cols;
+        matrix = new int *[rows];
+		for(int i=0;i < rows;i++){
+            matrix[i] =new int[cols];
+        }
+	}
+	for (int i = 0; i < rows; i++) {
+		for (int j = 0; j < cols; j++) {
+			matrix[i][j] = other.matrix[i][j];
+		}
+	}
+	return *this;
+}
+// Matrix operator *(Matrix &a, Matrix &b){
+//     Matrix c(a.GetRow(),b.GetCol());
+//     for (int i = 0; i < a.GetRow(); i++){
+// 		for(int j=0;j<b.GetCol(); j++){
+//             int s = 0;
+// 			for (int k = 0; k < a.GetCol(); k++)
+// 			{
+// 				s += a[i][k] * b[k][j];
+// 			}
+//             c[i][j]=s;
+//         }
+// 	}
+// 	return c;
+// }
+Matrix Matrix::operator * (const Matrix& b)const {
+     Matrix c(rows,b.cols);
+	for (int i = 0; i < rows; i++){
+		for(int j=0;j<b.cols; j++){
+            int s = 0;
+			for (int k = 0; k < cols; k++){
+				s += matrix[i][k] * b.matrix[k][j];
 			}
-            c[i][j]=s;
+            c.matrix[i][j]=s;
         }
 	}
 	return c;
 }
-int * Matrix::operator[](int row){
-    return matrix[row];
+Matrix Matrix::operator+ (const Matrix& b)const{
+    Matrix c(rows,cols);
+    for(int i=0;i<rows;i++){
+        for(int j=0;j<cols;j++){
+            c.matrix[i][j]=matrix[i][j]+b.matrix[i][j];
+        }
+    }
+    return c;
+}
+bool Matrix::operator==(const Matrix& b)const{
+    int flag = 1;
+    for(int i=0;i<rows;i++){
+        for(int j=0;j<cols;j++){
+            if(matrix[i][j]!=b.matrix[i][j]){
+                flag=0;
+            }
+        }
+    }
+    if(flag==1){
+        return true;
+    }
+    else{
+        return false;
+    }
 }
 std::istream &operator >>(std::istream &in,Matrix &r){
     for(int i=0;i<r.rows;i++){
         for(int j=0;j<r.cols;j++){
-            in >> r[i][j];
+            in >> r.matrix[i][j];
         }
     }
     return in;
 }
-std::ostream &operator <<(std::ostream &out,Matrix &r){
+std::ostream &operator <<(std::ostream &out,const Matrix &r){
     for(int i=0;i<r.rows;i++){
         for(int j=0;j<r.cols;j++){
-            out << r[i][j];
+            out << r.matrix[i][j];
         }
+        out << '\n';
     }
     return out;
 }
@@ -94,22 +192,9 @@ Matrix::~Matrix(){
     }
     delete[] matrix;
 }
-int main() {
-    int rows, cols;
-
-    std::cin >> rows >> cols;
-    Matrix A(rows, cols);
-    std::cin >> A;
-
-    std::cin >> rows >> cols;
-    Matrix B(rows, cols);
-    std::cin >> B;
-
-    std::cout << A * B;
-
-    return 0;
+int* Matrix::operator[](int index){
+	return *(matrix + index);
 }
-
 int main() {
     int rows, cols;
 
